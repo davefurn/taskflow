@@ -18,14 +18,19 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+    public UserDetails loadUserByUsername(String emailOrId)
+            throws UsernameNotFoundException {
+
+        User user = userRepository.findByEmail(emailOrId)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found: " + emailOrId));
 
         return new org.springframework.security.core.userdetails.User(
+                // Store UUID as username — SecurityUtil.getCurrentUser() uses this
                 user.getId().toString(),
                 user.getPasswordHash(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name().toUpperCase()))
+                List.of(new SimpleGrantedAuthority(
+                        "ROLE_" + user.getRole().name().toUpperCase()))
         );
     }
 }

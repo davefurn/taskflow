@@ -17,20 +17,28 @@ public class SecurityUtil {
 
     private final UserRepository userRepository;
 
-    // Call this from any service to get the currently logged-in User entity
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated()
+                || auth.getPrincipal().equals("anonymousUser")) {
             throw new UnauthorizedException("Not authenticated");
         }
 
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
-        // username is stored as email in our UserDetailsService
-        String email = userDetails.getUsername();
 
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("User session is invalid"));
+        // Username in UserDetails is stored as the user's UUID (set in UserDetailsServiceImpl)
+        String username = userDetails.getUsername();
+
+        try {
+            UUID userId = UUID.fromString(username);
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new UnauthorizedException("User session is invalid"));
+        } catch (IllegalArgumentException e) {
+            // Fallback — try as email
+            return userRepository.findByEmail(username)
+                    .orElseThrow(() -> new UnauthorizedException("User session is invalid"));
+        }
     }
 
     public UUID getCurrentUserId() {
