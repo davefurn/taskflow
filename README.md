@@ -1,8 +1,8 @@
-# TaskFlow API 🚀
+# TaskFlow API 
 
 TaskFlow is a robust, internal project and task tracking platform deployed for a single company. Think of it as a streamlined alternative to Linear or Asana. It provides the foundation for managing workspaces, projects, and tasks (with subtasks, dependencies, and comments), but its key differentiator is a powerful analytics engine that gives managers real-time insights into team workload, bottlenecks, and project velocity.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 * **Backend:** Java 21+, Spring Boot 3.x
 * **Database:** PostgreSQL (with built-in Full-Text Search)
@@ -13,7 +13,7 @@ TaskFlow is a robust, internal project and task tracking platform deployed for a
 * **Email:** Spring Mail (SMTP/Mailtrap) / AWS SES
 * **Frontend:** React / Next.js
 
-## 👥 User Roles & Permissions
+## User Roles & Permissions
 
 TaskFlow utilizes strict Role-Based Access Control (RBAC):
 * **Admin:** Full access. Manages users, app settings, and creates workspaces. Can view all projects and company-wide analytics.
@@ -21,7 +21,7 @@ TaskFlow utilizes strict Role-Based Access Control (RBAC):
 * **Member:** Can create tasks, update statuses, log time, and add comments. Can only view their own personal analytics.
 * **Viewer:** Read-only access to assigned projects and dashboards. Cannot create or edit data.
 
-## 🗄️ Core Domain Architecture (Database)
+## Core Domain Architecture (Database)
 
 The system is broken down into five highly relational domains:
 
@@ -31,7 +31,7 @@ The system is broken down into five highly relational domains:
 4. **Collaboration:** `comments` (threaded), `attachments` (S3), `notifications`, and `activity_log` (audit trail for all status/field changes).
 5. **Time Tracking & Analytics:** `time_entries`, `active_timers`, and pre-calculated snapshots (`daily_workload_snapshots`, `period_metrics`) populated by nightly batch jobs for instant dashboard loading.
 
-## 🔌 Core API Contract
+## Core API Contract
 
 The backend exposes a comprehensive RESTful API. Here is an overview of the primary modules:
 
@@ -61,7 +61,7 @@ The backend exposes a comprehensive RESTful API. Here is an overview of the prim
 * `GET /api/analytics/projects/{projectId}/burndown` - Retrieve ideal vs. actual task burndown data.
 * `GET /api/analytics/team-health` - Composite metrics on overdue rates, blockers, and workload balance.
 
-## ⚙️ Local Setup Instructions
+## Local Setup Instructions
 
 ### Prerequisites
 * Java 21 or higher installed
@@ -102,7 +102,7 @@ You can run the application directly using the Maven wrapper. Flyway will automa
 ```
 The server will start on `http://localhost:8080`.
 
-## 📚 API Documentation
+## API Documentation
 
 Once the server is running, you can view and test all available endpoints using the interactive Swagger UI:
 
