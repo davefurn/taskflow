@@ -31,6 +31,9 @@ The system is broken down into five highly relational domains:
 4. **Collaboration:** `comments` (threaded), `attachments` (S3), `notifications`, and `activity_log` (audit trail for all status/field changes).
 5. **Time Tracking & Analytics:** `time_entries`, `active_timers`, and pre-calculated snapshots (`daily_workload_snapshots`, `period_metrics`) populated by nightly batch jobs for instant dashboard loading.
 
+<img width="2890" height="2816" alt="taskflow" src="https://github.com/user-attachments/assets/fd771759-82b6-4648-a85f-7639c63bc3b1" />
+
+
 ## Core API Contract
 
 The backend exposes a comprehensive RESTful API. Here is an overview of the primary modules:
