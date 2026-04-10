@@ -28,7 +28,7 @@ public class AttachmentService {
     private final FileUploadService fileUploadService;
     private final SecurityUtil securityUtil;
 
-    // ── GET /api/tasks/{taskId}/attachments ───────────────────
+    // GET /api/tasks/{taskId}/attachments
 
     @Transactional(readOnly = true)
     public List<AttachmentResponse> getAttachments(UUID taskId) {
@@ -39,7 +39,7 @@ public class AttachmentService {
                 .stream().map(this::toResponse).toList();
     }
 
-    // ── POST /api/tasks/{taskId}/attachments ──────────────────
+    //  POST /api/tasks/{taskId}/attachments 
 
     @Transactional
     public AttachmentResponse uploadAttachment(UUID taskId, MultipartFile file) {
@@ -67,7 +67,7 @@ public class AttachmentService {
         return toResponse(attachment);
     }
 
-    // ── DELETE /api/attachments/{id} ──────────────────────────
+    //  DELETE /api/attachments/{id}
 
     @Transactional
     public void deleteAttachment(UUID attachmentId) {
@@ -87,7 +87,7 @@ public class AttachmentService {
         log.info("Attachment deleted: {}", attachmentId);
     }
 
-    // ── Avatar upload (PUT /api/users/me) ─────────────────────
+    //  Avatar upload (PUT /api/users/me)
 
     public String uploadAvatar(MultipartFile file) {
         FileUploadService.UploadResult result =

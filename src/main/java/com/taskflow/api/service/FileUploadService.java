@@ -37,21 +37,21 @@ public class FileUploadService {
             "image/jpeg", "image/png", "image/gif", "image/webp"
     );
 
-    // ── Task attachments ──────────────────────────────────────
+    //  Task attachments
 
     public UploadResult uploadAttachment(MultipartFile file) {
         validateFile(file, MAX_FILE_SIZE, ALLOWED_ATTACHMENT_TYPES);
         return upload(file, "taskflow/attachments");
     }
 
-    // ── User avatars ──────────────────────────────────────────
+    //  User avatars
 
     public UploadResult uploadAvatar(MultipartFile file) {
         validateFile(file, MAX_AVATAR_SIZE, ALLOWED_IMAGE_TYPES);
         return upload(file, "taskflow/avatars");
     }
 
-    // ── Core upload ───────────────────────────────────────────
+    //  Core upload ─
 
     private UploadResult upload(MultipartFile file, String folder) {
         try {
@@ -83,7 +83,7 @@ public class FileUploadService {
         }
     }
 
-    // ── Delete ────────────────────────────────────────────────
+    //  Delete
 
     public void delete(String publicId) {
         try {
@@ -94,7 +94,7 @@ public class FileUploadService {
         }
     }
 
-    // ── Validation ────────────────────────────────────────────
+    //  Validation
 
     private void validateFile(MultipartFile file, long maxSize,
                               List<String> allowedTypes) {
@@ -111,7 +111,7 @@ public class FileUploadService {
         }
     }
 
-    // ── Result DTO ────────────────────────────────────────────
+    //  Result DTO
 
     public record UploadResult(
             String url,

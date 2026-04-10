@@ -4,7 +4,6 @@ import com.taskflow.api.dto.response.analytics.*;
 import com.taskflow.api.entity.*;
 import com.taskflow.api.exception.ForbiddenException;
 import com.taskflow.api.exception.ResourceNotFoundException;
-import com.taskflow.api.repository.activityLog.ActivityLogRepository;
 import com.taskflow.api.repository.authAndUsers.UserRepository;
 import com.taskflow.api.repository.dependencies.TaskDependencyRepository;
 import com.taskflow.api.repository.projects.ProjectMemberRepository;
@@ -14,7 +13,6 @@ import com.taskflow.api.repository.tasks.TaskAssigneeRepository;
 import com.taskflow.api.repository.tasks.TaskRepository;
 import com.taskflow.api.repository.timeEntriesAndTimers.TimeEntryRepository;
 import com.taskflow.api.repository.workspaces.WorkspaceMemberRepository;
-import com.taskflow.api.repository.workspaces.WorkspaceRepository;
 import com.taskflow.api.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +41,7 @@ public class AnalyticsService {
     private final TimeEntryRepository timeEntryRepository;
     private final SecurityUtil securityUtil;
 
-    // ── GET /api/analytics/workload ───────────────────────────
+    //GET /api/analytics/workload
 
     @Transactional(readOnly = true)
     public WorkloadResponse getWorkload(UUID workspaceId, UUID projectId) {
@@ -101,7 +99,7 @@ public class AnalyticsService {
         return WorkloadResponse.builder().users(result).build();
     }
 
-    // ── GET /api/analytics/workload/heatmap ───────────────────
+    // GET /api/analytics/workload/heatmap
 
     @Transactional(readOnly = true)
     public HeatmapResponse getHeatmap(UUID workspaceId) {
@@ -145,7 +143,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── GET /api/analytics/projects/{projectId}/summary ───────
+    // GET /api/analytics/projects/{projectId}/summary
 
     @Transactional(readOnly = true)
     public ProjectSummaryResponse getProjectSummary(UUID projectId) {
@@ -205,7 +203,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── GET /api/analytics/projects/{projectId}/velocity ──────
+    // GET /api/analytics/projects/{projectId}/velocity
 
     @Transactional(readOnly = true)
     public List<VelocityResponse> getVelocity(UUID projectId, String periodType,
@@ -242,7 +240,7 @@ public class AnalyticsService {
         return result;
     }
 
-    // ── GET /api/analytics/projects/{projectId}/burndown ──────
+    // GET /api/analytics/projects/{projectId}/burndown
 
     @Transactional(readOnly = true)
     public BurndownResponse getBurndown(UUID projectId,
@@ -290,7 +288,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── GET /api/analytics/projects/{projectId}/blockers ──────
+    //GET /api/analytics/projects/{projectId}/blockers
 
     @Transactional(readOnly = true)
     public List<BlockerResponse> getBlockers(UUID projectId) {
@@ -321,7 +319,7 @@ public class AnalyticsService {
                 }).toList();
     }
 
-    // ── GET /api/analytics/users/{userId}/performance ─────────
+    // GET /api/analytics/users/{userId}/performance
 
     @Transactional(readOnly = true)
     public UserPerformanceResponse getUserPerformance(UUID userId,
@@ -423,7 +421,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── GET /api/analytics/team-health ────────────────────────
+    // GET /api/analytics/team-health
 
     @Transactional(readOnly = true)
     public TeamHealthResponse getTeamHealth(UUID workspaceId, UUID projectId) {
@@ -475,7 +473,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── GET /api/analytics/overview ───────────────────────────
+    // GET /api/analytics/overview
 
     @Transactional(readOnly = true)
     public OverviewResponse getOverview() {
@@ -550,7 +548,7 @@ public class AnalyticsService {
                 .build();
     }
 
-    // ── Helpers ───────────────────────────────────────────────
+    // Helpers
 
     private void assertManagerOrAdmin() {
         User current = securityUtil.getCurrentUser();
