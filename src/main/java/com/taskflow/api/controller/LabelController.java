@@ -54,7 +54,7 @@ public class LabelController {
     }
 
     @PostMapping("/api/tasks/{taskId}/labels")
-    @Operation(summary = "Assign labels to a task — replaces existing labels")
+    @Operation(summary = "Assign labels to a task - replaces existing labels")
     public ApiResponse assignLabels(
             @PathVariable UUID taskId,
             @Valid @RequestBody AssignLabelsRequest request) {

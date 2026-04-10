@@ -34,7 +34,6 @@ public class UserService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final NotificationPreferenceRepository notificationPreferenceRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtil securityUtil;
     private final EmailService emailService;
@@ -50,7 +49,11 @@ public class UserService {
             throw new ForbiddenException("You do not have permission to list users.");
         }
 
-        return userRepository.findAllWithFilters(workspaceId, role, search)
+        return userRepository.findAllWithFilters(
+                        workspaceId,
+                        role != null ? role.name() : null,   // convert enum to string
+                        search
+                )
                 .stream()
                 .map(this::toUserResponse)
                 .toList();
@@ -166,7 +169,7 @@ public class UserService {
                 && request.getRole() != User.Role.admin
                 && !anotherAdminExists(id)) {
             throw new BadRequestException(
-                    "Cannot change role — this is the last admin account."
+                    "Cannot change role - this is the last admin account."
             );
         }
 
@@ -195,8 +198,11 @@ public class UserService {
                     "Cannot delete the last admin account."
             );
         }
+        //implementing soft delete
+        user.setActive(false);
+        userRepository.save(user);
 
-        userRepository.delete(user);
+//        userRepository.delete(user);
         log.info("User deleted: {}", user.getEmail());
     }
 
@@ -292,7 +298,7 @@ public class UserService {
     //Helpers
 
     private boolean anotherAdminExists(UUID excludeUserId) {
-        return userRepository.findAllWithFilters(null, User.Role.admin, null)
+        return userRepository.findAllWithFilters(null, User.Role.admin.name(), null)
                 .stream()
                 .anyMatch(u -> !u.getId().equals(excludeUserId));
     }

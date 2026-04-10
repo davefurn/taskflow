@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -176,4 +177,31 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("UPDATE Task t SET t.status.id = :newStatusId WHERE t.status.id = :oldStatusId")
     void reassignStatus(@Param("oldStatusId") UUID oldStatusId,
                         @Param("newStatusId") UUID newStatusId);
+
+
+    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.parentTask IS NULL")
+    List<Task> findAllByProjectIdAndParentTaskIsNull(@Param("projectId") UUID projectId);
+
+    @Query("SELECT t FROM Task t WHERE t.createdAt >= :from AND t.createdAt < :to AND t.project.id = :projectId")
+    List<Task> findCreatedInPeriod(@Param("projectId") UUID projectId,
+                                   @Param("from") Instant from,
+                                   @Param("to") Instant to);
+
+    @Query("SELECT t FROM Task t WHERE t.completedAt IS NOT NULL AND t.completedAt >= :from")
+    List<Task> findCompletedAfter(@Param("from") Instant from);
+
+    @Query("SELECT t FROM Task t WHERE t.createdAt >= :from")
+    List<Task> findCreatedAfter(@Param("from") Instant from);
+
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.completedAt IS NULL")
+    long countActiveTasks();
+
+    @Query("""
+    SELECT COUNT(t) FROM Task t
+    WHERE t.project.id = :projectId
+    AND t.dueDate < :today
+    AND t.completedAt IS NULL
+""")
+    long countOverdueByProjectId(@Param("projectId") UUID projectId,
+                                 @Param("today") LocalDate today);
 }

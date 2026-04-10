@@ -51,4 +51,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
     boolean existsByProjectIdAndUserId(UUID projectId, UUID userId);
 
     long countByProjectId(UUID projectId);
+    @Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("DELETE FROM ProjectMember pm WHERE pm.project.id = :projectId")
+    void deleteAllByProjectId(@Param("projectId") UUID projectId);
 }

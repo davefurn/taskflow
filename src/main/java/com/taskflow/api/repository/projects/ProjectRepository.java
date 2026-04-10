@@ -47,4 +47,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     // Used by analytics
     List<Project> findAllByWorkspaceId(UUID workspaceId);
+
+    long countByStatus(Project.Status status);
 }

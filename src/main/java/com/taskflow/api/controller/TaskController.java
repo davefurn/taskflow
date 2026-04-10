@@ -27,7 +27,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/api/projects/{projectId}/tasks")
-    @Operation(summary = "List tasks — filterable, sortable, paginated")
+    @Operation(summary = "List tasks - filterable, sortable, paginated")
     public PageResponse<TaskSummaryResponse> getTasks(
             @PathVariable UUID projectId,
             @RequestParam(required = false) UUID statusId,
@@ -62,7 +62,7 @@ public class TaskController {
     }
 
     @PutMapping("/api/tasks/{id}")
-    @Operation(summary = "Update a task — logs activity, sends notifications")
+    @Operation(summary = "Update a task - logs activity, sends notifications")
     public TaskDetailResponse updateTask(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateTaskRequest request) {
@@ -70,7 +70,7 @@ public class TaskController {
     }
 
     @PatchMapping("/api/tasks/{id}/status")
-    @Operation(summary = "Quick status change — used by board drag-and-drop")
+    @Operation(summary = "Quick status change - used by board drag-and-drop")
     public TaskDetailResponse patchStatus(
             @PathVariable UUID id,
             @Valid @RequestBody PatchTaskStatusRequest request) {
@@ -86,7 +86,7 @@ public class TaskController {
     }
 
     @PatchMapping("/api/tasks/{id}/position")
-    @Operation(summary = "Update task position — used by list/board drag-and-drop")
+    @Operation(summary = "Update task position - used by list/board drag-and-drop")
     public ApiResponse patchPosition(
             @PathVariable UUID id,
             @Valid @RequestBody PatchTaskPositionRequest request) {

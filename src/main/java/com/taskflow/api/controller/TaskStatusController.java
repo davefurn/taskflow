@@ -35,7 +35,7 @@ public class TaskStatusController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a new status — project lead or admin")
+    @Operation(summary = "Create a new status - project lead or admin")
     public TaskStatusResponse createStatus(
             @PathVariable UUID projectId,
             @Valid @RequestBody CreateStatusRequest request) {
@@ -62,7 +62,7 @@ public class TaskStatusController {
 
     @DeleteMapping("/{statusId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete a status — reassign tasks first if needed")
+    @Operation(summary = "Delete a status - reassign tasks first if needed")
     public void deleteStatus(
             @PathVariable UUID projectId,
             @PathVariable UUID statusId,

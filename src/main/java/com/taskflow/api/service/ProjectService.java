@@ -43,8 +43,11 @@ public class ProjectService {
                                              String search) {
         User current = securityUtil.getCurrentUser();
 
+        String safeSearch = (search == null) ? "" : search;
+
         return projectRepository
-                .findAllWithFilters(current.getId(), workspaceId, status, search)
+
+                .findAllWithFilters(current.getId(), workspaceId, status, safeSearch)
                 .stream()
                 .map(this::toProjectResponse)
                 .toList();
@@ -188,8 +191,14 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
 
         assertLeadOrAdmin(project);
+
+        // Delete members first
+        projectMemberRepository.deleteAllByProjectId(id);
+
         projectRepository.delete(project);
         log.info("Project deleted: {}", project.getName());
+
+
     }
 
     // POST /api/projects/{id}/archive

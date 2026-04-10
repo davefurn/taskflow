@@ -126,7 +126,7 @@
 //                    .build();
 //
 //            resend.emails().send(params);
-//            log.info("Email sent to {} — subject: {}", to, subject);
+//            log.info("Email sent to {} - subject: {}", to, subject);
 //
 //        } catch (ResendException e) {
 //            // Never let email failure crash the main flow
@@ -248,7 +248,7 @@ public class EmailService {
             message.setSubject(subject);
             message.setText(body);
             mailSender.send(message);
-            log.info("Email sent to {} — subject: {}", to, subject);
+            log.info("Email sent to {} - subject: {}", to, subject);
         } catch (Exception e) {
             log.error("Failed to send email to {}: {}", to, e.getMessage());
         }

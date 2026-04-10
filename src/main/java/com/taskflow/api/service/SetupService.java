@@ -94,7 +94,7 @@ public class SetupService {
                         .build()
         );
 
-        // 5. Send verification email (async — never blocks response)
+        // 5. Send verification email (async - never blocks response)
         emailService.sendEmailVerification(admin.getEmail(), token);
 
         log.info("Initial setup complete. Admin created: {}", admin.getEmail());

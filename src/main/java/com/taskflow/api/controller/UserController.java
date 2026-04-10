@@ -10,6 +10,8 @@ import com.taskflow.api.dto.response.user.NotificationPrefsResponse;
 import com.taskflow.api.dto.response.user.UserDetailResponse;
 import com.taskflow.api.dto.response.user.UserResponse;
 import com.taskflow.api.entity.User;
+import com.taskflow.api.security.SecurityUtil;
+import com.taskflow.api.service.AttachmentService;
 import com.taskflow.api.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -17,7 +19,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,9 +34,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final AttachmentService attachmentService;
+    private final SecurityUtil securityUtil;
 
     @GetMapping
-    @Operation(summary = "List users — filterable by workspace, role, search")
+    @Operation(summary = "List users - filterable by workspace, role, search")
     public List<UserResponse> getUsers(
             @RequestParam(required = false) UUID workspaceId,
             @RequestParam(required = false) User.Role role,
@@ -42,7 +48,7 @@ public class UserController {
 
     @PostMapping("/invite")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Invite a new user — admin only")
+    @Operation(summary = "Invite a new user - admin only")
     public UserResponse inviteUser(@Valid @RequestBody InviteUserRequest request) {
         return userService.inviteUser(request);
     }
@@ -61,7 +67,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update user profile — admins can update anyone, users update themselves")
+    @Operation(summary = "Update user profile - admins can update anyone, users update themselves")
     public UserResponse updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -69,7 +75,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}/role")
-    @Operation(summary = "Change user role — admin only")
+    @Operation(summary = "Change user role - admin only")
     public UserResponse updateRole(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -78,7 +84,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete user — admin only")
+    @Operation(summary = "Delete user - admin only")
     public void deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
     }
@@ -88,5 +94,20 @@ public class UserController {
     public ApiResponse resetPassword(@PathVariable UUID id) {
         userService.adminResetPassword(id);
         return ApiResponse.of("Temporary password sent to user's email.");
+    }
+
+    @PostMapping(
+            value = "/me/avatar",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @Operation(summary = "Upload avatar - max 2MB, images only")
+    public UserResponse uploadAvatar(
+            @RequestParam("file") MultipartFile file) {
+        String url = attachmentService.uploadAvatar(file);
+        // Update user's avatarUrl
+        User current = securityUtil.getCurrentUser();
+        UpdateUserRequest req = new UpdateUserRequest();
+        req.setAvatarUrl(url);
+        return userService.updateUser(current.getId(), req);
     }
 }

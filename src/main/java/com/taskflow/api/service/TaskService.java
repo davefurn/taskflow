@@ -381,7 +381,7 @@ public class TaskService {
         assigneeIds.stream()
                 .filter(uid -> !uid.equals(assignedById))
                 .forEach(uid -> userRepository.findById(uid).ifPresent(user -> {
-                    log.info("Notify {} — assigned to task: {}", user.getEmail(), task.getTitle());
+                    log.info("Notify {} - assigned to task: {}", user.getEmail(), task.getTitle());
                     // EmailService notification handled by notification service in Stream 5
                 }));
     }

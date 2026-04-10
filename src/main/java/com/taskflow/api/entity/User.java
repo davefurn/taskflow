@@ -3,6 +3,7 @@ package com.taskflow.api.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.UUID;
                 @Index(name = "idx_users_email", columnList = "email")
         }
 )
+@SQLRestriction("is_active = true")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
@@ -56,7 +58,9 @@ public class User {
     @Column(name = "must_change_pwd", nullable = false)
     @Builder.Default
     private boolean mustChangePwd = false;
-
+    @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean isActive = true;
     @Column(name = "weekly_capacity_hours", precision = 4, scale = 1)
     @Builder.Default
     private BigDecimal weeklyCapacityHours = new BigDecimal("40.0");

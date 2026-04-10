@@ -1,5 +1,6 @@
 //package com.taskflow.api.config;
 //
+//import com.taskflow.api.security.CustomAccessDeniedHandler; // 🚨 Added import
 //import com.taskflow.api.security.JwtAuthFilter;
 //import com.taskflow.api.security.UserDetailsServiceImpl;
 //import lombok.RequiredArgsConstructor;
@@ -16,6 +17,12 @@
 //import org.springframework.security.crypto.password.PasswordEncoder;
 //import org.springframework.security.web.SecurityFilterChain;
 //import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+//import org.springframework.web.cors.CorsConfiguration;
+//import org.springframework.web.cors.CorsConfigurationSource;
+//import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+//
+//import java.util.Arrays;
+//import java.util.List;
 //
 //@Configuration
 //@EnableWebSecurity
@@ -25,28 +32,71 @@
 //
 //    private final JwtAuthFilter jwtAuthFilter;
 //    private final UserDetailsServiceImpl userDetailsService;
+//    private final CustomAccessDeniedHandler accessDeniedHandler; // 🚨 1. Injected the new handler
 //
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 //        http
+//                // 1. Enable CORS with the configuration below
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 //                .csrf(AbstractHttpConfigurer::disable)
+//
+//                // 🚨 2. Tell Spring Security to use your custom JSON handler for 403s
+//                .exceptionHandling(exceptions -> exceptions
+//                        .accessDeniedHandler(accessDeniedHandler)
+//                )
+//
 //                .sessionManagement(s ->
 //                        s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 //                .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers(
 //                                "/api/setup/**",
 //                                "/api/auth/**",
-//                                "/v3/api-docs/**",   // Standard SpringDoc path
+//                                "/v3/api-docs/**",
 //                                "/api-docs/**",
 //                                "/swagger-ui/**",
 //                                "/swagger-ui.html"
-////                                "/api-docs/**"
 //                        ).permitAll()
+//                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 //                        .anyRequest().authenticated()
 //                )
 //                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 //
 //        return http.build();
+//    }
+//
+//    // 2. Define the CORS rules for ngrok and frontend devs
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//
+//        configuration.setAllowedOriginPatterns(List.of(
+//                "http://localhost:3000",
+//                "http://localhost:5173",
+//                "https://*.ngrok-free.app",
+//                "https://*.ngrok-free.dev",
+//                "https://*.ngrok.io"
+//        ));
+//
+//        configuration.setAllowedMethods(Arrays.asList(
+//                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+//        ));
+//
+//        configuration.setAllowedHeaders(Arrays.asList(
+//                "Authorization",
+//                "Content-Type",
+//                "Cache-Control",
+//                "ngrok-skip-browser-warning",
+//                "X-Requested-With"
+//        ));
+//
+//        configuration.setAllowCredentials(true);
+//        configuration.setExposedHeaders(List.of("Authorization"));
+//        configuration.setMaxAge(3600L); // cache preflight for 1 hour
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
 //    }
 //
 //    @Bean
@@ -67,6 +117,8 @@
 
 package com.taskflow.api.config;
 
+import com.taskflow.api.security.CustomAccessDeniedHandler;
+import com.taskflow.api.security.CustomAuthenticationEntryPoint; // 🚨 Added import
 import com.taskflow.api.security.JwtAuthFilter;
 import com.taskflow.api.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -98,13 +150,21 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsServiceImpl userDetailsService;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint; // 🚨 Injected Entry Point
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Enable CORS with the configuration below
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+
+                // 🚨 Both JSON Error Handlers are now active here!
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler(accessDeniedHandler)
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                )
+
                 .sessionManagement(s ->
                         s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
@@ -116,6 +176,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -123,26 +184,33 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 2. Define the CORS rules for ngrok and frontend devs
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allows frontend devs to hit the API from any origin (localhost or hosted)
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://*.ngrok-free.app",
+                "https://*.ngrok-free.dev",
+                "https://*.ngrok.io"
+        ));
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
 
-        // Added 'ngrok-skip-browser-warning' to allowed headers
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
                 "Cache-Control",
-                "ngrok-skip-browser-warning"
+                "ngrok-skip-browser-warning",
+                "X-Requested-With"
         ));
 
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/setup")
 @RequiredArgsConstructor
-@Tag(name = "Setup", description = "First-launch only — disabled after first admin is created")
+@Tag(name = "Setup", description = "First-launch only - disabled after first admin is created")
 public class SetupController {
 
     private final SetupService setupService;

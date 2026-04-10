@@ -131,6 +131,9 @@ public class WorkspaceService {
         Workspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Workspace", id));
 
+        // Delete members first — Hibernate doesn't follow ON DELETE CASCADE
+        workspaceMemberRepository.deleteAllByWorkspaceId(id);
+
         workspaceRepository.delete(workspace);
         log.info("Workspace deleted: {}", workspace.getName());
     }

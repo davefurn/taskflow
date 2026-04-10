@@ -61,7 +61,7 @@ public class TaskGroupController {
 
     @DeleteMapping("/{groupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete a group — optionally move tasks to another group")
+    @Operation(summary = "Delete a group - optionally move tasks to another group")
     public void deleteGroup(
             @PathVariable UUID projectId,
             @PathVariable UUID groupId,

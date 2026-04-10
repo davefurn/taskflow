@@ -19,6 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/workspaces")
+@CrossOrigin(origins = "http://localhost:3000")
 @RequiredArgsConstructor
 @Tag(name = "Workspaces", description = "Workspace management endpoints")
 @SecurityRequirement(name = "bearerAuth")
@@ -27,21 +28,21 @@ public class WorkspaceController {
     private final WorkspaceService workspaceService;
 
     @GetMapping
-    @Operation(summary = "List workspaces — admins see all, others see their own")
+    @Operation(summary = "List workspaces - admins see all, others see their own")
     public List<WorkspaceResponse> getWorkspaces() {
         return workspaceService.getWorkspaces();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a workspace — admin only")
+    @Operation(summary = "Create a workspace - admin only")
     public WorkspaceResponse createWorkspace(
             @Valid @RequestBody CreateWorkspaceRequest request) {
         return workspaceService.createWorkspace(request);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a workspace — admin only")
+    @Operation(summary = "Update a workspace - admin only")
     public WorkspaceResponse updateWorkspace(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateWorkspaceRequest request) {
@@ -50,7 +51,7 @@ public class WorkspaceController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete a workspace — admin only")
+    @Operation(summary = "Delete a workspace - admin only")
     public void deleteWorkspace(@PathVariable UUID id) {
         workspaceService.deleteWorkspace(id);
     }
@@ -62,7 +63,7 @@ public class WorkspaceController {
     }
 
     @PostMapping("/{id}/members")
-    @Operation(summary = "Add members to a workspace — admin only")
+    @Operation(summary = "Add members to a workspace - admin only")
     public ApiResponse addMembers(
             @PathVariable UUID id,
             @Valid @RequestBody AddWorkspaceMembersRequest request) {
@@ -72,7 +73,7 @@ public class WorkspaceController {
 
     @DeleteMapping("/{id}/members/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Remove a member from a workspace — admin only")
+    @Operation(summary = "Remove a member from a workspace - admin only")
     public void removeMember(
             @PathVariable UUID id,
             @PathVariable UUID userId) {

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,4 +45,17 @@ public interface TaskDependencyRepository extends JpaRepository<TaskDependency, 
         AND   td.dependencyType = 'blocked_by'
     """)
     List<TaskDependency> findActiveBlockersInProject(@Param("projectId") UUID projectId);
+    // For auto-unblock job — find dependencies where blocking task
+// was completed in the last hour
+    @Query("""
+    SELECT td FROM TaskDependency td
+    JOIN FETCH td.task t
+    JOIN FETCH td.dependsOnTask dt
+    WHERE dt.completedAt IS NOT NULL
+    AND dt.completedAt >= :oneHourAgo
+    AND t.completedAt IS NULL
+""")
+    List<TaskDependency> findAllRecentlyUnblocked(
+            @Param("oneHourAgo") Instant oneHourAgo
+    );
 }

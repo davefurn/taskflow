@@ -30,7 +30,7 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @GetMapping
-    @Operation(summary = "List projects — filterable by workspace, status, search")
+    @Operation(summary = "List projects - filterable by workspace, status, search")
     public List<ProjectResponse> getProjects(
             @RequestParam(required = false) UUID workspaceId,
             @RequestParam(required = false) Project.Status status,
@@ -46,14 +46,14 @@ public class ProjectController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a project — manager and above")
+    @Operation(summary = "Create a project - manager and above")
     public ProjectDetailResponse createProject(
             @Valid @RequestBody CreateProjectRequest request) {
         return projectService.createProject(request);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update project — lead or admin")
+    @Operation(summary = "Update project - lead or admin")
     public ProjectDetailResponse updateProject(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateProjectRequest request) {
@@ -62,13 +62,13 @@ public class ProjectController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete project — lead or admin")
+    @Operation(summary = "Delete project - lead or admin")
     public void deleteProject(@PathVariable UUID id) {
         projectService.deleteProject(id);
     }
 
     @PostMapping("/{id}/archive")
-    @Operation(summary = "Archive a project — lead or admin")
+    @Operation(summary = "Archive a project - lead or admin")
     public ApiResponse archiveProject(@PathVariable UUID id) {
         projectService.archiveProject(id);
         return ApiResponse.of("Project archived.");
@@ -81,7 +81,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{id}/members")
-    @Operation(summary = "Add members to project — lead or admin")
+    @Operation(summary = "Add members to project - lead or admin")
     public ApiResponse addProjectMembers(
             @PathVariable UUID id,
             @Valid @RequestBody AddProjectMembersRequest request) {
@@ -91,7 +91,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}/members/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Remove a member from project — lead or admin")
+    @Operation(summary = "Remove a member from project - lead or admin")
     public void removeProjectMember(
             @PathVariable UUID id,
             @PathVariable UUID userId) {
