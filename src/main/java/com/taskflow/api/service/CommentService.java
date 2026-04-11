@@ -10,9 +10,12 @@ import com.taskflow.api.exception.*;
 import com.taskflow.api.repository.activityLog.ActivityLogRepository;
 import com.taskflow.api.repository.authAndUsers.UserRepository;
 import com.taskflow.api.repository.comments.CommentRepository;
+import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
+import com.taskflow.api.repository.notifications.NotificationRepository;
 import com.taskflow.api.repository.projects.ProjectMemberRepository;
 import com.taskflow.api.repository.tasks.TaskRepository;
 import com.taskflow.api.security.SecurityUtil;
+import com.taskflow.api.util.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,9 @@ public class CommentService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final SecurityUtil securityUtil;
+    private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
+    private final EmailService emailService;
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@(\\w+)");
 
@@ -119,8 +125,42 @@ public class CommentService {
         Matcher matcher = MENTION_PATTERN.matcher(content);
         while (matcher.find()) {
             String mentionedName = matcher.group(1);
-            log.info("@mention detected: {} in task {}", mentionedName, task.getTitle());
-            // Full notification handled in Stream 5
+
+            // Find user by name in the project
+            userRepository.findAllWithFilters(null, null, mentionedName)
+                    .stream()
+                    .filter(u -> !u.getId().equals(author.getId()))
+                    .forEach(mentionedUser -> {
+
+                        // In-app notification
+                        notificationRepository.save(
+                                Notification.builder()
+                                        .user(mentionedUser)
+                                        .type("mentioned")
+                                        .title(author.getName() + " mentioned you")
+                                        .message(author.getName() + " mentioned you in: \""
+                                                + task.getTitle() + "\"")
+                                        .linkUrl("/tasks/" + task.getId())
+                                        .isRead(false)
+                                        .build()
+                        );
+
+                        // Email
+                        notificationPreferenceRepository
+                                .findByUserId(mentionedUser.getId())
+                                .ifPresent(prefs -> {
+                                    if (prefs.isMentionedInComment() && prefs.isEmailEnabled()) {
+                                        emailService.sendMentionNotification(
+                                                mentionedUser.getEmail(),
+                                                author.getName(),
+                                                task.getTitle()
+                                        );
+                                    }
+                                });
+
+                        log.info("Notified {} — mentioned in task: {}",
+                                mentionedUser.getEmail(), task.getTitle());
+                    });
         }
     }
 

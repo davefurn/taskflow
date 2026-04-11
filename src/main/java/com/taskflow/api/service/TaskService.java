@@ -19,6 +19,8 @@ import com.taskflow.api.repository.comments.CommentRepository;
 import com.taskflow.api.repository.dependencies.TaskDependencyRepository;
 import com.taskflow.api.repository.labels.LabelRepository;
 import com.taskflow.api.repository.labels.TaskLabelRepository;
+import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
+import com.taskflow.api.repository.notifications.NotificationRepository;
 import com.taskflow.api.repository.projects.ProjectMemberRepository;
 import com.taskflow.api.repository.projects.ProjectRepository;
 import com.taskflow.api.repository.taskStatusesAndGroups.TaskGroupRepository;
@@ -26,6 +28,7 @@ import com.taskflow.api.repository.taskStatusesAndGroups.TaskStatusRepository;
 import com.taskflow.api.repository.tasks.TaskAssigneeRepository;
 import com.taskflow.api.repository.tasks.TaskRepository;
 import com.taskflow.api.security.SecurityUtil;
+import com.taskflow.api.util.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
@@ -54,6 +57,9 @@ public class TaskService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final SecurityUtil securityUtil;
+    private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
+    private final EmailService emailService;
 
     // ── GET /api/projects/{projectId}/tasks ───────────────────
 
@@ -377,12 +383,36 @@ public class TaskService {
     }
 
     private void notifyAssignees(Task task, List<UUID> assigneeIds, UUID assignedById) {
-        // Exclude the person who assigned — don't notify yourself
         assigneeIds.stream()
-                .filter(uid -> !uid.equals(assignedById))
+                .filter(uid -> !uid.equals(assignedById)) // don't notify yourself
                 .forEach(uid -> userRepository.findById(uid).ifPresent(user -> {
-                    log.info("Notify {} - assigned to task: {}", user.getEmail(), task.getTitle());
-                    // EmailService notification handled by notification service in Stream 5
+
+                    // 1. In-app notification
+                    notificationRepository.save(
+                            Notification.builder()
+                                    .user(user)
+                                    .type("task_assigned")
+                                    .title("You were assigned to a task")
+                                    .message("You were assigned to: \"" + task.getTitle() + "\"")
+                                    .linkUrl("/tasks/" + task.getId())
+                                    .isRead(false)
+                                    .build()
+                    );
+
+                    // 2. Email notification — check preferences first
+                    notificationPreferenceRepository.findByUserId(user.getId())
+                            .ifPresent(prefs -> {
+                                if (prefs.isTaskAssigned() && prefs.isEmailEnabled()) {
+                                    emailService.sendTaskAssigned(
+                                            user.getEmail(),
+                                            task.getTitle(),
+                                            task.getProject().getName()
+                                    );
+                                }
+                            });
+
+                    log.info("Notified {} — assigned to task: {}",
+                            user.getEmail(), task.getTitle());
                 }));
     }
 
