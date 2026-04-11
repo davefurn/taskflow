@@ -134,38 +134,46 @@
 //        }
 //    }
 //}
+//}
 
 package com.taskflow.api.util;
 
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final Resend resend;
+    private final String from;
+    private final String baseUrl;
 
-    @Value("${app.mail.from}")
-    private String from;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
+    public EmailService(
+            @Value("${app.resend.api-key}") String apiKey,
+            @Value("${app.mail.from}") String from,
+            @Value("${app.base-url}") String baseUrl) {
+        this.resend  = new Resend(apiKey);
+        this.from    = from;
+        this.baseUrl = baseUrl;
+    }
 
     @Async
     public void sendEmailVerification(String toEmail, String token) {
         String link = baseUrl + "/verify-email?token=" + token;
         send(toEmail,
                 "Verify your TaskFlow email",
-                "Welcome to TaskFlow!\n\n"
-                        + "Please verify your email:\n" + link
-                        + "\n\nThis link expires in 24 hours."
+                "<h2>Welcome to TaskFlow</h2>" +
+                        "<p>Please verify your email by clicking the link below:</p>" +
+                        "<a href='" + link + "' style='background:#6366F1;color:white;" +
+                        "padding:12px 24px;border-radius:6px;text-decoration:none;" +
+                        "display:inline-block'>Verify Email</a>" +
+                        "<p style='color:#6b7280;font-size:14px'>This link expires in 24 hours.</p>"
         );
     }
 
@@ -173,11 +181,13 @@ public class EmailService {
     public void sendInvitation(String toEmail, String name, String tempPassword) {
         send(toEmail,
                 "You've been invited to TaskFlow",
-                "Hi " + name + ",\n\n"
-                        + "You've been invited to TaskFlow.\n"
-                        + "Login at: " + baseUrl + "/login\n"
-                        + "Temporary password: " + tempPassword + "\n\n"
-                        + "You will be asked to change your password on first login."
+                "<h2>Hi " + name + ",</h2>" +
+                        "<p>You've been invited to TaskFlow.</p>" +
+                        "<p><b>Login:</b> <a href='" + baseUrl + "/login'>" + baseUrl + "/login</a></p>" +
+                        "<p><b>Temporary password:</b> <code style='background:#f3f4f6;" +
+                        "padding:4px 8px;border-radius:4px'>" + tempPassword + "</code></p>" +
+                        "<p style='color:#6b7280;font-size:14px'>" +
+                        "You will be asked to change your password on first login.</p>"
         );
     }
 
@@ -186,29 +196,40 @@ public class EmailService {
         String link = baseUrl + "/reset-password?token=" + token;
         send(toEmail,
                 "Reset your TaskFlow password",
-                "Click the link below to reset your password:\n\n" + link
-                        + "\n\nThis link expires in 1 hour.\n\n"
-                        + "If you didn't request this, ignore this email."
+                "<h2>Password Reset</h2>" +
+                        "<p>Click the link below to reset your password:</p>" +
+                        "<a href='" + link + "' style='background:#6366F1;color:white;" +
+                        "padding:12px 24px;border-radius:6px;text-decoration:none;" +
+                        "display:inline-block'>Reset Password</a>" +
+                        "<p style='color:#6b7280;font-size:14px'>This link expires in 1 hour.</p>" +
+                        "<p style='color:#6b7280;font-size:14px'>" +
+                        "If you didn't request this, ignore this email.</p>"
         );
     }
 
     @Async
-    public void sendAdminPasswordReset(String toEmail, String name, String tempPassword) {
+    public void sendAdminPasswordReset(String toEmail, String name,
+                                       String tempPassword) {
         send(toEmail,
                 "Your TaskFlow password has been reset",
-                "Hi " + name + ",\n\n"
-                        + "An admin has reset your password.\n"
-                        + "Temporary password: " + tempPassword + "\n\n"
-                        + "Please log in and change it immediately."
+                "<h2>Hi " + name + ",</h2>" +
+                        "<p>An admin has reset your password.</p>" +
+                        "<p><b>Temporary password:</b> <code style='background:#f3f4f6;" +
+                        "padding:4px 8px;border-radius:4px'>" + tempPassword + "</code></p>" +
+                        "<p style='color:#6b7280;font-size:14px'>" +
+                        "Please log in and change it immediately.</p>"
         );
     }
 
     @Async
-    public void sendTaskAssigned(String toEmail, String taskTitle, String projectName) {
+    public void sendTaskAssigned(String toEmail, String taskTitle,
+                                 String projectName) {
         send(toEmail,
                 "You've been assigned to a task",
-                "Task: " + taskTitle + "\nProject: " + projectName
-                        + "\n\nView it at: " + baseUrl
+                "<h2>New Task Assignment</h2>" +
+                        "<p><b>Task:</b> " + taskTitle + "</p>" +
+                        "<p><b>Project:</b> " + projectName + "</p>" +
+                        "<a href='" + baseUrl + "' style='color:#6366F1'>View in TaskFlow</a>"
         );
     }
 
@@ -217,8 +238,9 @@ public class EmailService {
                                         String taskTitle) {
         send(toEmail,
                 mentionedBy + " mentioned you in a comment",
-                mentionedBy + " mentioned you in: " + taskTitle
-                        + "\n\nView it at: " + baseUrl
+                "<h2>You were mentioned</h2>" +
+                        "<p><b>" + mentionedBy + "</b> mentioned you in: <b>" + taskTitle + "</b></p>" +
+                        "<a href='" + baseUrl + "' style='color:#6366F1'>View in TaskFlow</a>"
         );
     }
 
@@ -226,8 +248,9 @@ public class EmailService {
     public void sendDueTomorrowReminder(String toEmail, String taskTitle) {
         send(toEmail,
                 "Task due tomorrow: " + taskTitle,
-                "This task is due tomorrow: " + taskTitle
-                        + "\n\nView it at: " + baseUrl
+                "<h2>Reminder</h2>" +
+                        "<p>This task is due tomorrow: <b>" + taskTitle + "</b></p>" +
+                        "<a href='" + baseUrl + "' style='color:#6366F1'>View in TaskFlow</a>"
         );
     }
 
@@ -235,21 +258,28 @@ public class EmailService {
     public void sendOverdueNotification(String toEmail, String taskTitle) {
         send(toEmail,
                 "Overdue task: " + taskTitle,
-                "This task is now overdue: " + taskTitle
-                        + "\n\nView it at: " + baseUrl
+                "<h2>Task Overdue</h2>" +
+                        "<p>This task is now overdue: <b>" + taskTitle + "</b></p>" +
+                        "<a href='" + baseUrl + "' style='color:#6366F1'>View in TaskFlow</a>"
         );
     }
 
-    private void send(String to, String subject, String body) {
+    // ── Private helper ────────────────────────────────────────
+
+    private void send(String to, String subject, String html) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(from);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
-            log.info("Email sent to {} - subject: {}", to, subject);
-        } catch (Exception e) {
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(from)
+                    .to(to)
+                    .subject(subject)
+                    .html(html)
+                    .build();
+
+            resend.emails().send(params);
+            log.info("Email sent to {} — subject: {}", to, subject);
+
+        } catch (ResendException e) {
+            // Never let email failure crash the main flow
             log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
