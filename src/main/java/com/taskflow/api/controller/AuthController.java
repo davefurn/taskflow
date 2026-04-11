@@ -67,7 +67,7 @@ public class AuthController {
         return ApiResponse.of("Password reset successfully.");
     }
 
-    // ── Helper ────────────────────────────────────────────────
+    // Helper
 
     private String getClientIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
