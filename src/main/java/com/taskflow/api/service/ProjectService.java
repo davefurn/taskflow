@@ -6,6 +6,8 @@ import com.taskflow.api.entity.*;
 import com.taskflow.api.entity.embeddable.ProjectMemberId;
 import com.taskflow.api.exception.*;
 import com.taskflow.api.repository.authAndUsers.UserRepository;
+import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
+import com.taskflow.api.repository.notifications.NotificationRepository;
 import com.taskflow.api.repository.projects.ProjectMemberRepository;
 import com.taskflow.api.repository.projects.ProjectRepository;
 import com.taskflow.api.repository.taskStatusesAndGroups.TaskStatusRepository;
@@ -13,6 +15,7 @@ import com.taskflow.api.repository.tasks.TaskRepository;
 import com.taskflow.api.repository.workspaces.WorkspaceMemberRepository;
 import com.taskflow.api.repository.workspaces.WorkspaceRepository;
 import com.taskflow.api.security.SecurityUtil;
+import com.taskflow.api.util.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,9 @@ public class ProjectService {
     private final TaskStatusRepository taskStatusRepository;
     private final SecurityUtil securityUtil;
     private final UserService userService;
+    private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
+    private final EmailService emailService;
 
     // GET /api/projects 
 
@@ -237,7 +243,6 @@ public class ProjectService {
     }
 
     // POST /api/projects/{id}/members
-
     @Transactional
     public int addProjectMembers(UUID id, AddProjectMembersRequest request) {
 
@@ -245,16 +250,15 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
 
         assertLeadOrAdmin(project);
+        User current = securityUtil.getCurrentUser();
 
         int added = 0;
         for (UUID userId : request.getUserIds()) {
 
-            // Skip if already a member
             if (projectMemberRepository.existsByProjectIdAndUserId(id, userId)) {
                 continue;
             }
 
-            // User must be a workspace member first
             if (!workspaceMemberRepository.existsByWorkspaceIdAndUserId(
                     project.getWorkspace().getId(), userId)) {
                 throw new BadRequestException(
@@ -275,6 +279,9 @@ public class ProjectService {
                             .build()
             );
             added++;
+
+            // ---> NEW: Trigger the notification
+            notifyProjectAssignment(user, project, current.getId());
         }
 
         log.info("{} members added to project {}", added, project.getName());
@@ -298,6 +305,7 @@ public class ProjectService {
         projectMemberRepository.deleteByProjectIdAndUserId(projectId, userId);
         log.info("User {} removed from project {}", userId, project.getName());
     }
+
 
     // Helpers
 
@@ -341,6 +349,35 @@ public class ProjectService {
                 .filter(pm -> pm.getRole() == ProjectMember.Role.lead)
                 .orElseThrow(() -> new ForbiddenException(
                         "Only the project lead or an admin can perform this action."));
+    }
+
+    private void notifyProjectAssignment(User user, Project project, UUID assignedById) {
+        if (user.getId().equals(assignedById)) return; // Don't notify the person adding themselves
+
+        // 1. In-app notification
+        notificationRepository.save(
+                Notification.builder()
+                        .user(user)
+                        .type("project_assigned")
+                        .title("Added to a project")
+                        .message("You were added to the project: \"" + project.getName() + "\"")
+                        .linkUrl("/projects/" + project.getId())
+                        .isRead(false)
+                        .build()
+        );
+
+        // 2. Email notification
+        notificationPreferenceRepository.findByUserId(user.getId())
+                .ifPresent(prefs -> {
+                    // Assuming you add an isProjectAssigned() boolean to your prefs entity,
+                    // otherwise just check isEmailEnabled()
+                    if (prefs.isEmailEnabled()) {
+                        emailService.sendProjectAssigned(
+                                user.getEmail(),
+                                project.getName()
+                        );
+                    }
+                });
     }
 
     private ProjectResponse toProjectResponse(Project p) {

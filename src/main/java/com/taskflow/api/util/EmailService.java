@@ -294,7 +294,42 @@ public class EmailService {
 
         send(toEmail, "Action Required: Task Overdue", buildEmailTemplate("Task Overdue", content));
     }
+    @Async
+    public void sendProjectAssigned(String toEmail, String projectName) {
+        String content = """
+                <p>You have been added as a member to a new project.</p>
+                <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: 600;">%s</p>
+                </div>
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">&rarr; View Project in TaskFlow</a>
+                </p>
+                """.formatted(projectName, baseUrl);
 
+        send(toEmail, "You were added to a project: " + projectName, buildEmailTemplate("Project Assignment", content));
+    }
+
+    @Async
+    public void sendDependencyAdded(String toEmail, String taskTitle, String dependsOnTitle) {
+        String content = """
+                <p>A new dependency has been added to a task you are assigned to.</p>
+                <table style="width: 100%%; border-collapse: collapse; margin: 20px 0;">
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #6b7280; width: 120px;">Your Task:</td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600;">%s</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #6b7280;">Now Depends On:</td>
+                        <td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; font-weight: 600;">%s</td>
+                    </tr>
+                </table>
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="%s" style="background-color: #ffffff; color: #0f172a; border: 1px solid #0f172a; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">View in TaskFlow</a>
+                </p>
+                """.formatted(taskTitle, dependsOnTitle, baseUrl);
+
+        send(toEmail, "Task Dependency Updated", buildEmailTemplate("Dependency Added", content));
+    }
     // ── Private helpers ────────────────────────────────────────
 
     private void send(String to, String subject, String html) {

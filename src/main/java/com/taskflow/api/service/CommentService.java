@@ -158,7 +158,7 @@ public class CommentService {
                                     }
                                 });
 
-                        log.info("Notified {} — mentioned in task: {}",
+                        log.info("Notified {} - mentioned in task: {}",
                                 mentionedUser.getEmail(), task.getTitle());
                     });
         }
