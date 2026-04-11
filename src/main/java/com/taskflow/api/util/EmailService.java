@@ -165,7 +165,7 @@ public class EmailService {
 
     @Async
     public void sendEmailVerification(String toEmail, String token) {
-        String link = baseUrl + "/verify-email?token=" + token;
+        String link = baseUrl + "/auth/verify-email?token=" + token;
         String content = """
                 <p>Welcome to TaskFlow.</p>
                 <p>To complete your registration and secure your account, please verify your email address by clicking the button below.</p>
@@ -180,22 +180,25 @@ public class EmailService {
 
     @Async
     public void sendInvitation(String toEmail, String name, String tempPassword) {
+
+        String loginUrl = baseUrl + "/auth/login";
         String content = """
                 <p>Hello %s,</p>
                 <p>You have been invited to join the TaskFlow platform.</p>
                 <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 6px; margin: 20px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>Login URL:</strong> <a href="%s/login" style="color: #2563eb;">%s/login</a></p>
+                    <p style="margin: 0 0 10px 0;"><strong>Login URL:</strong> <a href="%s" style="color: #2563eb;">%s</a></p>
                     <p style="margin: 0;"><strong>Temporary Password:</strong> <code style="background: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: monospace;">%s</code></p>
                 </div>
                 <p style="color: #6b7280; font-size: 14px;">For security purposes, you will be required to change your password upon your first login.</p>
-                """.formatted(name, baseUrl, baseUrl, tempPassword);
+                """.formatted(name, loginUrl, loginUrl, tempPassword);
 
         send(toEmail, "Invitation to join TaskFlow", buildEmailTemplate("Platform Invitation", content));
     }
 
     @Async
     public void sendPasswordReset(String toEmail, String token) {
-        String link = baseUrl + "/reset-password?token=" + token;
+
+        String link = baseUrl + "/auth/reset-password?token=" + token;
         String content = """
                 <p>We received a request to reset the password associated with your TaskFlow account.</p>
                 <p>If you made this request, please click the button below to set a new password:</p>
@@ -211,14 +214,16 @@ public class EmailService {
 
     @Async
     public void sendAdminPasswordReset(String toEmail, String name, String tempPassword) {
+
+        String loginUrl = baseUrl + "/auth/login";
         String content = """
                 <p>Hello %s,</p>
                 <p>An administrator has reset the access credentials for your TaskFlow account.</p>
                 <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 6px; margin: 20px 0;">
                     <p style="margin: 0;"><strong>New Temporary Password:</strong> <code style="background: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: monospace;">%s</code></p>
                 </div>
-                <p style="color: #6b7280; font-size: 14px;">Please log in immediately to establish a new, secure password.</p>
-                """.formatted(name, tempPassword);
+                <p style="color: #6b7280; font-size: 14px;">Please <a href="%s" style="color: #2563eb;">log in</a> immediately to establish a new, secure password.</p>
+                """.formatted(name, tempPassword, loginUrl);
 
         send(toEmail, "TaskFlow Account Credential Update", buildEmailTemplate("Credentials Updated", content));
     }
@@ -290,6 +295,8 @@ public class EmailService {
         send(toEmail, "Action Required: Task Overdue", buildEmailTemplate("Task Overdue", content));
     }
 
+    // ── Private helpers ────────────────────────────────────────
+
     private void send(String to, String subject, String html) {
         try {
             CreateEmailOptions params = CreateEmailOptions.builder()
@@ -300,12 +307,13 @@ public class EmailService {
                     .build();
 
             resend.emails().send(params);
-            log.info("Email sent to {} - subject: {}", to, subject);
+            log.info("Email sent to {} — subject: {}", to, subject);
 
         } catch (ResendException e) {
             log.error("Failed to send email to {}: {}", to, e.getMessage());
         }
     }
+
 
     private String buildEmailTemplate(String title, String content) {
         String template = """
