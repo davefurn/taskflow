@@ -5,6 +5,7 @@ import com.taskflow.api.dto.response.project.*;
 import com.taskflow.api.entity.*;
 import com.taskflow.api.entity.embeddable.ProjectMemberId;
 import com.taskflow.api.exception.*;
+import com.taskflow.api.repository.activityLog.ActivityLogRepository;
 import com.taskflow.api.repository.authAndUsers.UserRepository;
 import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
 import com.taskflow.api.repository.notifications.NotificationRepository;
@@ -41,6 +42,7 @@ public class ProjectService {
     private final NotificationRepository notificationRepository;
     private final NotificationPreferenceRepository notificationPreferenceRepository;
     private final EmailService emailService;
+    private final ActivityLogRepository activityLogRepository;
 
     // GET /api/projects 
 
@@ -200,7 +202,7 @@ public class ProjectService {
 
         // Delete members first
         projectMemberRepository.deleteAllByProjectId(id);
-
+        activityLogRepository.deleteAllByProjectId(id);
         projectRepository.delete(project);
         log.info("Project deleted: {}", project.getName());
 
