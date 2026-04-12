@@ -308,6 +308,20 @@ public class EmailService {
 
         send(toEmail, "You were added to a project: " + projectName, buildEmailTemplate("Project Assignment", content));
     }
+    @Async
+    public void sendWorkspaceAssigned(String toEmail, String workspaceName) {
+        String content = """
+                <p>You have been added as a member to a new workspace.</p>
+                <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: 600;">%s</p>
+                </div>
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">&rarr; View Workspace in TaskFlow</a>
+                </p>
+                """.formatted(workspaceName, baseUrl);
+
+        send(toEmail, "You were added to a workspace: " + workspaceName, buildEmailTemplate("Workspace Assignment", content));
+    }
 
     @Async
     public void sendDependencyAdded(String toEmail, String taskTitle, String dependsOnTitle) {

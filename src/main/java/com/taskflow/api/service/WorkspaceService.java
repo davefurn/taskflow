@@ -6,10 +6,13 @@ import com.taskflow.api.entity.*;
 import com.taskflow.api.entity.embeddable.WorkspaceMemberId;
 import com.taskflow.api.exception.*;
 import com.taskflow.api.repository.authAndUsers.UserRepository;
+import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
+import com.taskflow.api.repository.notifications.NotificationRepository;
 import com.taskflow.api.repository.projects.ProjectRepository;
 import com.taskflow.api.repository.workspaces.WorkspaceMemberRepository;
 import com.taskflow.api.repository.workspaces.WorkspaceRepository;
 import com.taskflow.api.security.SecurityUtil;
+import com.taskflow.api.util.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,9 @@ public class WorkspaceService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final SecurityUtil securityUtil;
+    private final NotificationRepository notificationRepository;
+    private final NotificationPreferenceRepository notificationPreferenceRepository;
+    private final EmailService emailService;
 
     // GET /api/workspaces
 
@@ -197,6 +203,7 @@ public class WorkspaceService {
                             .build()
             );
             added++;
+            notifyWorkspaceAssignment(user, workspace, current.getId());
         }
 
         log.info("{} members added to workspace {}", added, workspace.getName());
@@ -223,5 +230,34 @@ public class WorkspaceService {
 
         workspaceMemberRepository.deleteByWorkspaceIdAndUserId(workspaceId, userId);
         log.info("User {} removed from workspace {}", userId, workspaceId);
+    }
+
+    // ── Private helpers ────────────────────────────────────────
+
+    private void notifyWorkspaceAssignment(User user, Workspace workspace, UUID assignedById) {
+        if (user.getId().equals(assignedById)) return; // Don't notify the person adding themselves
+
+        // 1. In-app notification
+        notificationRepository.save(
+                Notification.builder()
+                        .user(user)
+                        .type("workspace_assigned")
+                        .title("Added to a workspace")
+                        .message("You were added to the workspace: \"" + workspace.getName() + "\"")
+                        .linkUrl("/workspaces") // Or wherever your frontend routes workspaces
+                        .isRead(false)
+                        .build()
+        );
+
+        // 2. Email notification
+        notificationPreferenceRepository.findByUserId(user.getId())
+                .ifPresent(prefs -> {
+                    if (prefs.isEmailEnabled()) {
+                        emailService.sendWorkspaceAssigned(
+                                user.getEmail(),
+                                workspace.getName()
+                        );
+                    }
+                });
     }
 }
