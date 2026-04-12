@@ -72,11 +72,10 @@ public class Task {
     )
     private Task parentTask;
 
-    @OneToMany(mappedBy = "parentTask", fetch = FetchType.LAZY)
+
+    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<Task> subtasks = new ArrayList<>();
-
-
+    private List<ActivityLog> activityLogs = new ArrayList<>();
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<TaskAssignee> assignees = new ArrayList<>();
@@ -101,6 +100,9 @@ public class Task {
     @Builder.Default
     private List<TimeEntry> timeEntries = new ArrayList<>();
 
+    @OneToMany(mappedBy = "parentTask", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Task> subtasks = new ArrayList<>();
 
     @Column(nullable = false)
     private String title;
