@@ -106,7 +106,15 @@ public class Project {
     @Builder.Default
     private List<Task> tasks = new ArrayList<>();
 
-
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PeriodMetric> periodMetrics = new ArrayList<>();
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DailyWorkloadSnapshot> workloadSnapshots = new ArrayList<>();
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TeamHealthHistory> teamHealthSnapshots = new ArrayList<>();
     public enum Status {
         not_started, in_progress, on_hold, completed, archived
     }

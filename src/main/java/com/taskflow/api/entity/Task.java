@@ -72,7 +72,9 @@ public class Task {
     )
     private Task parentTask;
 
-
+    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ActiveTimer> activeTimers = new ArrayList<>();
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ActivityLog> activityLogs = new ArrayList<>();
