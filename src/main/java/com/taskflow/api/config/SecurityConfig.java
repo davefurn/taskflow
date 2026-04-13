@@ -191,6 +191,7 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "https://task-flow-rho-liart.vercel.app",
                 "https://*.ngrok-free.app",
                 "https://*.ngrok-free.dev",
                 "https://*.ngrok.io"
