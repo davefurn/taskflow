@@ -74,8 +74,12 @@ public class AuthService {
         user.setLastLogin(Instant.now());
         userRepository.save(user);
 
+//        String token = jwtUtil.generateToken(
+//                user.getId(), user.getEmail(), user.getRole().name()
+//        );
         String token = jwtUtil.generateToken(
-                user.getId(), user.getEmail(), user.getRole().name()
+                user.getId(),
+                user.getRole().ordinal()   // 0=admin, 1=manager, 2=member, 3=viewer
         );
 
         log.info("User logged in: {}", user.getEmail());
