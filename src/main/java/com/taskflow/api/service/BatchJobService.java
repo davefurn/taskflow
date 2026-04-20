@@ -8,7 +8,6 @@ import com.taskflow.api.repository.dependencies.TaskDependencyRepository;
 import com.taskflow.api.repository.notifications.NotificationPreferenceRepository;
 import com.taskflow.api.repository.notifications.NotificationRepository;
 import com.taskflow.api.repository.projects.ProjectRepository;
-import com.taskflow.api.repository.taskStatusesAndGroups.TaskStatusRepository;
 import com.taskflow.api.repository.tasks.TaskAssigneeRepository;
 import com.taskflow.api.repository.tasks.TaskRepository;
 import com.taskflow.api.repository.timeEntriesAndTimers.TimeEntryRepository;
@@ -18,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.math.BigDecimal;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -41,7 +42,92 @@ public class BatchJobService {
     private final TeamHealthHistoryRepository teamHealthHistoryRepository;
     private final EmailService emailService;
 
+
+
+
+
     // 1. Due tomorrow reminders - runs daily at 8:00 AM
+
+//    @Scheduled(cron = "0 0 8 * * *")
+//    @Transactional
+//    public void sendDueTomorrowReminders() {
+//        log.info("Batch: running due-tomorrow reminders");
+//
+//        LocalDate tomorrow = LocalDate.now().plusDays(1);
+//        List<Task> tasksDueTomorrow = taskRepository.findTasksDueTomorrow(tomorrow);
+//
+//        for (Task task : tasksDueTomorrow) {
+//            for (TaskAssignee assignee : task.getAssignees()) {
+//                User user = assignee.getUser();
+//
+//                notificationPreferenceRepository
+//                        .findByUserId(user.getId())
+//                        .ifPresent(prefs -> {
+//                            if (prefs.isTaskDueTomorrow()) {
+//                                // In-app notification
+//                                createNotification(
+//                                        user,
+//                                        "task_due_tomorrow",
+//                                        "Task due tomorrow",
+//                                        "\"" + task.getTitle() + "\" is due tomorrow.",
+//                                        "/tasks/" + task.getId()
+//                                );
+//
+//                                // Email notification
+//                                if (prefs.isEmailEnabled()) {
+//                                    emailService.sendDueTomorrowReminder(
+//                                            user.getEmail(), task.getTitle());
+//                                }
+//                            }
+//                        });
+//            }
+//        }
+//
+//        log.info("Batch: due-tomorrow reminders sent for {} tasks",
+//                tasksDueTomorrow.size());
+//    }
+
+    //2. Overdue detection - runs daily at 9:00 AM
+//
+//    @Scheduled(cron = "0 0 9 * * *")
+//    @Transactional
+//    public void detectOverdueTasks() {
+//        log.info("Batch: running overdue detection");
+//
+//        LocalDate today = LocalDate.now();
+//        List<Task> overdueTasks = taskRepository.findOverdueTasks(today);
+//
+//        for (Task task : overdueTasks) {
+//            for (TaskAssignee assignee : task.getAssignees()) {
+//                User user = assignee.getUser();
+//
+//                notificationPreferenceRepository
+//                        .findByUserId(user.getId())
+//                        .ifPresent(prefs -> {
+//                            if (prefs.isTaskOverdue()) {
+//                                createNotification(
+//                                        user,
+//                                        "task_overdue",
+//                                        "Task overdue",
+//                                        "\"" + task.getTitle() + "\" is overdue.",
+//                                        "/tasks/" + task.getId()
+//                                );
+//
+//                                if (prefs.isEmailEnabled()) {
+//                                    emailService.sendOverdueNotification(
+//                                            user.getEmail(), task.getTitle());
+//                                }
+//                            }
+//                        });
+//            }
+//        }
+//
+//        log.info("Batch: overdue notifications sent for {} tasks",
+//                overdueTasks.size());
+//    }
+
+    // 3. Weekly workload summary - every Monday at 9:00 AM
+// ── 1. Due tomorrow reminders — runs daily at 8:00 AM ─────
 
     @Scheduled(cron = "0 0 8 * * *")
     @Transactional
@@ -51,38 +137,58 @@ public class BatchJobService {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         List<Task> tasksDueTomorrow = taskRepository.findTasksDueTomorrow(tomorrow);
 
+        if (tasksDueTomorrow.isEmpty()) {
+            log.info("Batch: no tasks due tomorrow");
+            return;
+        }
+
+        // Group tasks by user
+        Map<User, List<Task>> tasksByUser = new HashMap<>();
         for (Task task : tasksDueTomorrow) {
             for (TaskAssignee assignee : task.getAssignees()) {
-                User user = assignee.getUser();
-
-                notificationPreferenceRepository
-                        .findByUserId(user.getId())
-                        .ifPresent(prefs -> {
-                            if (prefs.isTaskDueTomorrow()) {
-                                // In-app notification
-                                createNotification(
-                                        user,
-                                        "task_due_tomorrow",
-                                        "Task due tomorrow",
-                                        "\"" + task.getTitle() + "\" is due tomorrow.",
-                                        "/tasks/" + task.getId()
-                                );
-
-                                // Email notification
-                                if (prefs.isEmailEnabled()) {
-                                    emailService.sendDueTomorrowReminder(
-                                            user.getEmail(), task.getTitle());
-                                }
-                            }
-                        });
+                tasksByUser
+                        .computeIfAbsent(assignee.getUser(), u -> new ArrayList<>())
+                        .add(task);
             }
         }
 
-        log.info("Batch: due-tomorrow reminders sent for {} tasks",
-                tasksDueTomorrow.size());
+        // One notification + one email per user
+        for (Map.Entry<User, List<Task>> entry : tasksByUser.entrySet()) {
+            User user = entry.getKey();
+            List<Task> userTasks = entry.getValue();
+
+            notificationPreferenceRepository.findByUserId(user.getId())
+                    .ifPresent(prefs -> {
+                        if (!prefs.isTaskDueTomorrow()) return;
+
+                        // Single in-app notification summarising all tasks
+                        String message = userTasks.size() == 1
+                                ? "\"" + userTasks.get(0).getTitle() + "\" is due tomorrow."
+                                : userTasks.size() + " tasks are due tomorrow.";
+
+                        createNotification(
+                                user,
+                                "task_due_tomorrow",
+                                "Tasks due tomorrow",
+                                message,
+                                "/my-tasks"
+                        );
+
+                        // Single consolidated email
+                        if (prefs.isEmailEnabled()) {
+                            emailService.sendDueTomorrowDigest(
+                                    user.getEmail(),
+                                    user.getName(),
+                                    userTasks
+                            );
+                        }
+                    });
+        }
+
+        log.info("Batch: due-tomorrow digests sent to {} users", tasksByUser.size());
     }
 
-    //2. Overdue detection - runs daily at 9:00 AM
+// ── 2. Overdue detection — runs daily at 9:00 AM ──────────
 
     @Scheduled(cron = "0 0 9 * * *")
     @Transactional
@@ -92,37 +198,53 @@ public class BatchJobService {
         LocalDate today = LocalDate.now();
         List<Task> overdueTasks = taskRepository.findOverdueTasks(today);
 
+        if (overdueTasks.isEmpty()) {
+            log.info("Batch: no overdue tasks");
+            return;
+        }
+
+        // Group by user
+        Map<User, List<Task>> tasksByUser = new HashMap<>();
         for (Task task : overdueTasks) {
             for (TaskAssignee assignee : task.getAssignees()) {
-                User user = assignee.getUser();
-
-                notificationPreferenceRepository
-                        .findByUserId(user.getId())
-                        .ifPresent(prefs -> {
-                            if (prefs.isTaskOverdue()) {
-                                createNotification(
-                                        user,
-                                        "task_overdue",
-                                        "Task overdue",
-                                        "\"" + task.getTitle() + "\" is overdue.",
-                                        "/tasks/" + task.getId()
-                                );
-
-                                if (prefs.isEmailEnabled()) {
-                                    emailService.sendOverdueNotification(
-                                            user.getEmail(), task.getTitle());
-                                }
-                            }
-                        });
+                tasksByUser
+                        .computeIfAbsent(assignee.getUser(), u -> new ArrayList<>())
+                        .add(task);
             }
         }
 
-        log.info("Batch: overdue notifications sent for {} tasks",
-                overdueTasks.size());
+        for (Map.Entry<User, List<Task>> entry : tasksByUser.entrySet()) {
+            User user = entry.getKey();
+            List<Task> userTasks = entry.getValue();
+
+            notificationPreferenceRepository.findByUserId(user.getId())
+                    .ifPresent(prefs -> {
+                        if (!prefs.isTaskOverdue()) return;
+
+                        String message = userTasks.size() == 1
+                                ? "\"" + userTasks.get(0).getTitle() + "\" is overdue."
+                                : userTasks.size() + " tasks are overdue.";
+
+                        createNotification(
+                                user,
+                                "task_overdue",
+                                "Overdue tasks",
+                                message,
+                                "/my-tasks"
+                        );
+
+                        if (prefs.isEmailEnabled()) {
+                            emailService.sendOverdueDigest(
+                                    user.getEmail(),
+                                    user.getName(),
+                                    userTasks
+                            );
+                        }
+                    });
+        }
+
+        log.info("Batch: overdue digests sent to {} users", tasksByUser.size());
     }
-
-    // 3. Weekly workload summary - every Monday at 9:00 AM
-
     @Scheduled(cron = "0 0 9 * * MON")
     @Transactional
     public void sendWeeklyWorkloadSummary() {

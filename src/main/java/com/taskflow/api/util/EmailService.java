@@ -145,7 +145,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
+import com.taskflow.api.entity.Task;
+import java.util.List;
 @Slf4j
 @Service
 public class EmailService {
@@ -265,35 +266,35 @@ public class EmailService {
         send(toEmail, "Mention Notification from " + mentionedBy, buildEmailTemplate("Recent Mention", content));
     }
 
-    @Async
-    public void sendDueTomorrowReminder(String toEmail, String taskTitle) {
-        String content = """
-                <p>This is a courtesy reminder that you have an assigned task due tomorrow.</p>
-                <div style="background-color: #fefce8; border: 1px solid #fef08a; padding: 16px; border-radius: 6px; margin: 20px 0;">
-                    <p style="margin: 0; font-weight: 600; color: #854d0e;">%s</p>
-                </div>
-                <p style="text-align: center; margin: 20px 0;">
-                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">Review Task Details</a>
-                </p>
-                """.formatted(taskTitle, baseUrl);
+//    @Async
+//    public void sendDueTomorrowReminder(String toEmail, String taskTitle) {
+//        String content = """
+//                <p>This is a courtesy reminder that you have an assigned task due tomorrow.</p>
+//                <div style="background-color: #fefce8; border: 1px solid #fef08a; padding: 16px; border-radius: 6px; margin: 20px 0;">
+//                    <p style="margin: 0; font-weight: 600; color: #854d0e;">%s</p>
+//                </div>
+//                <p style="text-align: center; margin: 20px 0;">
+//                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">Review Task Details</a>
+//                </p>
+//                """.formatted(taskTitle, baseUrl);
+//
+//        send(toEmail, "Reminder: Task Due Tomorrow", buildEmailTemplate("Upcoming Deadline", content));
+//    }
 
-        send(toEmail, "Reminder: Task Due Tomorrow", buildEmailTemplate("Upcoming Deadline", content));
-    }
-
-    @Async
-    public void sendOverdueNotification(String toEmail, String taskTitle) {
-        String content = """
-                <p>Please be advised that the following assigned task is currently past its scheduled deadline.</p>
-                <div style="background-color: #fef2f2; border: 1px solid #fecaca; padding: 16px; border-radius: 6px; margin: 20px 0;">
-                    <p style="margin: 0; font-weight: 600; color: #991b1b;">%s</p>
-                </div>
-                <p style="text-align: center; margin: 20px 0;">
-                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">Review Task Details</a>
-                </p>
-                """.formatted(taskTitle, baseUrl);
-
-        send(toEmail, "Action Required: Task Overdue", buildEmailTemplate("Task Overdue", content));
-    }
+//    @Async
+//    public void sendOverdueNotification(String toEmail, String taskTitle) {
+//        String content = """
+//                <p>Please be advised that the following assigned task is currently past its scheduled deadline.</p>
+//                <div style="background-color: #fef2f2; border: 1px solid #fecaca; padding: 16px; border-radius: 6px; margin: 20px 0;">
+//                    <p style="margin: 0; font-weight: 600; color: #991b1b;">%s</p>
+//                </div>
+//                <p style="text-align: center; margin: 20px 0;">
+//                    <a href="%s" style="color: #2563eb; text-decoration: none; font-weight: 600;">Review Task Details</a>
+//                </p>
+//                """.formatted(taskTitle, baseUrl);
+//
+//        send(toEmail, "Action Required: Task Overdue", buildEmailTemplate("Task Overdue", content));
+//    }
     @Async
     public void sendProjectAssigned(String toEmail, String projectName) {
         String content = """
@@ -324,6 +325,119 @@ public class EmailService {
     }
 
     @Async
+    public void sendDueTomorrowDigest(String toEmail, String userName,
+                                      List<Task> tasks) {
+        String subject = tasks.size() == 1
+                ? "Reminder: \"" + tasks.get(0).getTitle() + "\" is due tomorrow"
+                : "Reminder: " + tasks.size() + " tasks due tomorrow";
+
+        send(toEmail, subject, buildDueTomorrowHtml(userName, tasks));
+    }
+
+    @Async
+    public void sendOverdueDigest(String toEmail, String userName,
+                                  List<Task> tasks) {
+        String subject = tasks.size() == 1
+                ? "Overdue: \"" + tasks.get(0).getTitle() + "\""
+                : tasks.size() + " overdue tasks need your attention";
+
+        send(toEmail, subject, buildOverdueHtml(userName, tasks));
+    }
+
+// ── HTML builders ─────────────────────────────────────────
+
+    private String buildDueTomorrowHtml(String userName, List<Task> tasks) {
+        StringBuilder rows = new StringBuilder();
+        for (Task task : tasks) {
+            rows.append("<tr>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0'>")
+                    .append(escapeHtml(task.getTitle()))
+                    .append("</td>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#6b7280'>")
+                    .append(task.getProject() != null ? escapeHtml(task.getProject().getName()) : "—")
+                    .append("</td>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#6b7280'>")
+                    .append(priorityBadge(task.getPriority()))
+                    .append("</td>")
+                    .append("</tr>");
+        }
+
+        return "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'>" +
+                "<h2 style='color:#111827'>Hi " + escapeHtml(userName) + ",</h2>" +
+                "<p style='color:#374151'>You have <strong>" + tasks.size() + " task" +
+                (tasks.size() > 1 ? "s" : "") + "</strong> due tomorrow:</p>" +
+                "<table style='width:100%;border-collapse:collapse;margin:16px 0'>" +
+                "<thead><tr>" +
+                "<th style='text-align:left;padding:8px 12px;background:#f9fafb;font-size:12px;color:#6b7280;text-transform:uppercase'>Task</th>" +
+                "<th style='text-align:left;padding:8px 12px;background:#f9fafb;font-size:12px;color:#6b7280;text-transform:uppercase'>Project</th>" +
+                "<th style='text-align:left;padding:8px 12px;background:#f9fafb;font-size:12px;color:#6b7280;text-transform:uppercase'>Priority</th>" +
+                "</tr></thead><tbody>" +
+                rows +
+                "</tbody></table>" +
+                "<a href='" + baseUrl + "/my-tasks' style='display:inline-block;" +
+                "background:#6366F1;color:white;padding:10px 20px;border-radius:6px;" +
+                "text-decoration:none;margin-top:8px'>View my tasks</a>" +
+                "<p style='color:#9ca3af;font-size:13px;margin-top:24px'>" +
+                "You can manage your notification preferences in TaskFlow settings.</p>" +
+                "</div>";
+    }
+
+    private String buildOverdueHtml(String userName, List<Task> tasks) {
+        StringBuilder rows = new StringBuilder();
+        for (Task task : tasks) {
+            long daysOverdue = task.getDueDate() != null
+                    ? java.time.temporal.ChronoUnit.DAYS.between(
+                    task.getDueDate(), java.time.LocalDate.now())
+                    : 0;
+
+            rows.append("<tr>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0'>")
+                    .append(escapeHtml(task.getTitle()))
+                    .append("</td>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#6b7280'>")
+                    .append(task.getProject() != null ? escapeHtml(task.getProject().getName()) : "—")
+                    .append("</td>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0;color:#ef4444;font-weight:500'>")
+                    .append(daysOverdue == 1 ? "1 day overdue" : daysOverdue + " days overdue")
+                    .append("</td>")
+                    .append("<td style='padding:10px 12px;border-bottom:1px solid #f0f0f0'>")
+                    .append(priorityBadge(task.getPriority()))
+                    .append("</td>")
+                    .append("</tr>");
+        }
+
+        return "<div style='font-family:sans-serif;max-width:600px;margin:0 auto'>" +
+                "<h2 style='color:#111827'>Hi " + escapeHtml(userName) + ",</h2>" +
+                "<p style='color:#374151'>You have <strong>" + tasks.size() + " overdue task" +
+                (tasks.size() > 1 ? "s" : "") + "</strong> that need your attention:</p>" +
+                "<table style='width:100%;border-collapse:collapse;margin:16px 0'>" +
+                "<thead><tr>" +
+                "<th style='text-align:left;padding:8px 12px;background:#fff7f7;font-size:12px;color:#6b7280;text-transform:uppercase'>Task</th>" +
+                "<th style='text-align:left;padding:8px 12px;background:#fff7f7;font-size:12px;color:#6b7280;text-transform:uppercase'>Project</th>" +
+                "<th style='text-align:left;padding:8px 12px;background:#fff7f7;font-size:12px;color:#6b7280;text-transform:uppercase'>Overdue by</th>" +
+                "<th style='text-align:left;padding:8px 12px;background:#fff7f7;font-size:12px;color:#6b7280;text-transform:uppercase'>Priority</th>" +
+                "</tr></thead><tbody>" +
+                rows +
+                "</tbody></table>" +
+                "<a href='" + baseUrl + "/my-tasks' style='display:inline-block;" +
+                "background:#ef4444;color:white;padding:10px 20px;border-radius:6px;" +
+                "text-decoration:none;margin-top:8px'>Review overdue tasks</a>" +
+                "<p style='color:#9ca3af;font-size:13px;margin-top:24px'>" +
+                "You can manage your notification preferences in TaskFlow settings.</p>" +
+                "</div>";
+    }
+
+
+
+    private String escapeHtml(String input) {
+        if (input == null) return "";
+        return input
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
+    }
+    @Async
     public void sendDependencyAdded(String toEmail, String taskTitle, String dependsOnTitle) {
         String content = """
                 <p>A new dependency has been added to a task you are assigned to.</p>
@@ -345,7 +459,18 @@ public class EmailService {
         send(toEmail, "Task Dependency Updated", buildEmailTemplate("Dependency Added", content));
     }
     // ── Private helpers ────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────
 
+    private String priorityBadge(Task.Priority priority) {
+        if (priority == null) return "<span style='color:#9ca3af'>None</span>";
+        return switch (priority) {
+            case urgent -> "<span style='color:#dc2626;font-weight:600'>Urgent</span>";
+            case high   -> "<span style='color:#ea580c;font-weight:500'>High</span>";
+            case medium -> "<span style='color:#d97706'>Medium</span>";
+            case low    -> "<span style='color:#65a30d'>Low</span>";
+            case none   -> "<span style='color:#9ca3af'>None</span>";
+        };
+    }
     private void send(String to, String subject, String html) {
         try {
             CreateEmailOptions params = CreateEmailOptions.builder()
