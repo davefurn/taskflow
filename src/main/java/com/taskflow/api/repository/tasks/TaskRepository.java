@@ -112,20 +112,22 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     // Analytics — tasks due tomorrow (for notification job)
     @Query("""
-        SELECT t FROM Task t
-        JOIN t.assignees ta
-        WHERE t.dueDate = :tomorrow
-        AND t.completedAt IS NULL
-    """)
+    SELECT DISTINCT t FROM Task t
+    LEFT JOIN FETCH t.project
+    JOIN t.assignees ta
+    WHERE t.dueDate = :tomorrow
+    AND t.completedAt IS NULL
+""")
     List<Task> findTasksDueTomorrow(@Param("tomorrow") LocalDate tomorrow);
 
     // Analytics — overdue tasks
     @Query("""
-        SELECT t FROM Task t
-        JOIN t.assignees ta
-        WHERE t.dueDate < :today
-        AND t.completedAt IS NULL
-    """)
+    SELECT DISTINCT t FROM Task t
+    LEFT JOIN FETCH t.project
+    JOIN t.assignees ta
+    WHERE t.dueDate < :today
+    AND t.completedAt IS NULL
+""")
     List<Task> findOverdueTasks(@Param("today") LocalDate today);
 
     // Analytics — tasks completed in period
