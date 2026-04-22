@@ -193,6 +193,7 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "https://task-flow-five-sigma.vercel.app",
                 "https://task-flow-rho-liart.vercel.app",
+                "https://univaciti-taskflow-web.vercel.app",
                 "https://*.ngrok-free.app",
                 "https://*.ngrok-free.dev",
                 "https://*.ngrok.io"
