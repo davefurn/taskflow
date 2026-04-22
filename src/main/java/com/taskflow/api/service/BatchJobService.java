@@ -129,7 +129,7 @@ public class BatchJobService {
     // 3. Weekly workload summary - every Monday at 9:00 AM
 // ── 1. Due tomorrow reminders — runs daily at 8:00 AM ─────
 
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "0 45 9 * * *")
     @Transactional
     public void sendDueTomorrowReminders() {
         log.info("Batch: running due-tomorrow reminders");
@@ -190,7 +190,7 @@ public class BatchJobService {
 
 // ── 2. Overdue detection — runs daily at 9:00 AM ──────────
 
-    @Scheduled(cron = "0 0 9 * * *")
+    @Scheduled(cron = "0 45 9 * * *")
     @Transactional
     public void detectOverdueTasks() {
         log.info("Batch: running overdue detection");
@@ -279,7 +279,7 @@ public class BatchJobService {
 
     //4. Daily workload snapshot - runs at 11:00 PM
 
-    @Scheduled(cron = "0 0 23 * * *")
+    @Scheduled(cron = "0 0 22 * * *")
     @Transactional
     public void snapshotDailyWorkload() {
         log.info("Batch: snapshotting daily workload");
@@ -344,7 +344,7 @@ public class BatchJobService {
 
     // 5. Team health snapshot - runs at 11:30 PM
 
-    @Scheduled(cron = "0 30 23 * * *")
+    @Scheduled(cron = "0 30 22 * * *")
     @Transactional
     public void snapshotTeamHealth() {
         log.info("Batch: snapshotting team health");

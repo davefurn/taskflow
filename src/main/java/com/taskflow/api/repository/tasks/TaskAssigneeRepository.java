@@ -21,14 +21,22 @@ public interface TaskAssigneeRepository extends JpaRepository<TaskAssignee, Task
     void deleteAllByTaskId(@Param("taskId") UUID taskId);
 
 
+//    @Query("""
+//        SELECT t FROM Task t
+//        JOIN t.assignees ta
+//        WHERE ta.user.id = :userId
+//        AND t.completedAt IS NULL
+//    """)
+//    List<Task> findActiveTasksByUserId(@Param("userId") UUID userId);
+    // In TaskAssigneeRepository — update this query
     @Query("""
-        SELECT t FROM Task t
-        JOIN t.assignees ta
-        WHERE ta.user.id = :userId
-        AND t.completedAt IS NULL
-    """)
+    SELECT t FROM Task t
+    JOIN FETCH t.project
+    JOIN t.assignees ta
+    WHERE ta.user.id = :userId
+    AND t.completedAt IS NULL
+""")
     List<Task> findActiveTasksByUserId(@Param("userId") UUID userId);
-
     @Query("""
         SELECT COUNT(t) FROM Task t
         JOIN t.assignees ta
