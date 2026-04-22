@@ -535,7 +535,6 @@
 //                .replace("{{CONTENT}}", content);
 //    }
 //}
-
 package com.taskflow.api.util;
 
 import com.resend.Resend;
@@ -923,7 +922,6 @@ public class EmailService {
                             <td align="center">
                                 <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="max-width:600px;">
 
-                                    <!-- Header -->
                                     <tr>
                                         <td style="background-color:#0f172a;border-radius:10px 10px 0 0;padding:24px 40px;">
                                             <table role="presentation" width="100%%" cellpadding="0" cellspacing="0">
@@ -939,28 +937,25 @@ public class EmailService {
                                         </td>
                                     </tr>
 
-                                    <!-- Title band -->
                                     <tr>
                                         <td style="background-color:#1e293b;padding:12px 40px;">
                                             <span style="color:#e2e8f0;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">%s</span>
                                         </td>
                                     </tr>
 
-                                    <!-- Body -->
                                     <tr>
                                         <td style="background-color:#ffffff;padding:40px 40px 36px;color:#334155;font-size:15px;line-height:1.7;">
                                             %s
                                         </td>
                                     </tr>
 
-                                    <!-- Footer -->
                                     <tr>
-                                        <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 10px 10px;padding:24px 40px;">
-                                            <p style="margin:0;color:#64748b;font-size:12px;line-height:1.6;">
+                                        <td align="center" style="background-color:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 10px 10px; padding:24px 40px; text-align:center;">
+                                            <p style="margin:0; color:#64748b; font-size:12px; line-height:1.6;">
                                                 This is an automated notification from <strong style="color:#0f172a;">TaskFlow</strong>.
-                                                Please do not reply to this email.
+                                                <br>Please do not reply to this email.
                                             </p>
-                                            <p style="margin:8px 0 0;color:#94a3b8;font-size:11px;">
+                                            <p style="margin:8px 0 0; color:#94a3b8; font-size:11px;">
                                                 &copy; 2026 TaskFlow, Inc. &nbsp;&bull;&nbsp; All rights reserved.
                                             </p>
                                         </td>
