@@ -498,7 +498,7 @@ public class BatchJobService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
 
-    @Scheduled(cron = "0 30 11 * * *")
+    @Scheduled(cron = "0 00 11 * * *")
     @Transactional
     public void sendDueTomorrowReminders() {
         log.info("Batch: running due-tomorrow reminders");
@@ -556,7 +556,7 @@ public class BatchJobService {
         log.info("Batch: due-tomorrow digests sent to {} users", tasksByUser.size());
     }
 
-    @Scheduled(cron = "0 32 11 * * *")
+    @Scheduled(cron = "0 02 11 * * *")
     @Transactional
     public void detectOverdueTasks() {
         log.info("Batch: running overdue detection");
