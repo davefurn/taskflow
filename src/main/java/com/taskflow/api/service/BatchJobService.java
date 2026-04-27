@@ -613,7 +613,7 @@ public class BatchJobService {
         log.info("Batch: overdue digests sent to {} users", tasksByUser.size());
     }
 
-    @Scheduled(cron = "0 20 10 * * MON")
+    @Scheduled(cron = "0 30 10 * * MON")
     @Transactional
     public void sendWeeklyWorkloadSummary() {
         log.info("Batch: running weekly workload summary");
@@ -637,8 +637,12 @@ public class BatchJobService {
                                 "/analytics/workload");
 
                         if (prefs.isEmailEnabled()) {
-                            log.info("Batch: sending weekly summary to {}",
-                                    manager.getEmail());
+                            log.info("Batch: sending weekly summary to {}", manager.getEmail());
+                            emailService.sendWeeklyWorkloadSummary(
+                                    manager.getEmail(),
+                                    manager.getName(),
+                                    activeTasks
+                            );
                         }
                     });
         }

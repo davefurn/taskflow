@@ -691,6 +691,35 @@ public class EmailService {
 
         send(toEmail, mentionedBy + " mentioned you in a comment", buildEmailTemplate("You Were Mentioned", content));
     }
+    @Async
+    public void sendWeeklyWorkloadSummary(String toEmail, String userName,
+                                          long activeTasks) {
+        String content = """
+            <p style="margin:0 0 8px;">Hello <strong>%s</strong>,</p>
+            <p style="margin:0 0 24px;color:#374151;">Here is your weekly workload summary.</p>
+
+            <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+                        padding:24px;margin:0 0 32px;text-align:center;">
+                <p style="margin:0 0 8px;font-size:13px;color:#64748b;
+                           text-transform:uppercase;letter-spacing:0.7px;font-weight:600;">
+                    Active Tasks This Week
+                </p>
+                <p style="margin:0;font-size:48px;font-weight:700;color:#0f172a;">%d</p>
+            </div>
+
+            <p style="text-align:center;margin:0;">
+                <a href="%s/analytics/workload"
+                   style="display:inline-block;background-color:#0f172a;color:#ffffff;
+                          padding:12px 28px;border-radius:6px;text-decoration:none;
+                          font-size:14px;font-weight:600;letter-spacing:0.3px;">
+                    View Workload Analytics &rarr;
+                </a>
+            </p>
+            """.formatted(userName, activeTasks, baseUrl);
+
+        send(toEmail, "Your Weekly Workload Summary",
+                buildEmailTemplate("Weekly Summary", content));
+    }
 
     @Async
     public void sendProjectAssigned(String toEmail, String projectName) {
